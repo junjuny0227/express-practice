@@ -1,0 +1,31 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SSH_HOST: ssh.gsmsv.site
+      SSH_PORT: 21114
+      SSH_USERNAME: ubuntu
+
+    steps:
+      - name: Deploy over SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' '${{ secrets.SSH_PRIVATE_KEY }}' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
+
+          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USERNAME@$SSH_HOST" << 'EOF'
+            set -e
+            cd '${{ secrets.DEPLOY_PATH }}'
+            git pull
+            docker compose up -d --build
+            docker image prune -f
+          EOF
