@@ -44,3 +44,38 @@ SSH_USERNAME=ubuntu
 ```
 
 The value in `SSH_PRIVATE_KEY` must be an SSH private key, not the VM password.
+
+## Troubleshooting SSH_PRIVATE_KEY
+
+If GitHub Actions fails with `Permission denied (publickey,password)`, check these:
+
+1. `SSH_PRIVATE_KEY` contains the private key, including both header and footer:
+
+```txt
+-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----
+```
+
+2. The matching public key is registered on the server:
+
+```bash
+cat ~/.ssh/express_practice_deploy.pub
+```
+
+Paste that public key into the server's `~/.ssh/authorized_keys`.
+
+3. Server key permissions are correct:
+
+```bash
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+```
+
+4. Test the same key from your local machine:
+
+```bash
+ssh -i ~/.ssh/express_practice_deploy ubuntu@ssh.gsmsv.site -p 21114
+```
+
+If this local command still asks for the VM password, the public key is not registered correctly.

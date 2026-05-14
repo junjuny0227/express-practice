@@ -18,11 +18,16 @@ jobs:
       - name: Deploy over SSH
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' '${{ secrets.SSH_PRIVATE_KEY }}' > ~/.ssh/deploy_key
+          printf '%s\n' '${{ secrets.SSH_PRIVATE_KEY }}' | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p "$SSH_PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
 
-          ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USERNAME@$SSH_HOST" << 'EOF'
+          ssh \
+            -i ~/.ssh/deploy_key \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -p "$SSH_PORT" \
+            "$SSH_USERNAME@$SSH_HOST" << 'EOF'
             set -e
             cd '${{ secrets.DEPLOY_PATH }}'
             git pull
